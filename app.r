@@ -3,6 +3,7 @@ library(shinythemes)
 library(dplyr)
 library(readr)
 library(purrr)
+library(spectral)
 
 amplitudMinima <- 0
 amplitudMaxima <- 5
@@ -31,7 +32,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                     
                     numericInput("periodo", "Periodo:", 20, min = periodoMinimo, max = periodoMaximo),
                     
-                    sliderInput(inputId = "tauFraccional", label = "Tau:", 
+                    sliderInput("tauFraccional", label = "Tau:", 
                                 min = tauFraccionalMinimo, max = tauFraccionalMaximo, value = 0.5, step = 0.1),
                     
 
@@ -42,7 +43,8 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                   
                   mainPanel(
                     plotOutput(outputId = "trenDePulso", height = "400px"),
-                    plotOutput(outputId = "fourier", height = "400px")
+                    plotOutput(outputId = "fourier", height = "400px"),
+                    plotOutput(outputId = "lineasEspectrales", height = "400px")
                     
                   )
                 )
@@ -87,8 +89,16 @@ server <- function(input, output) {
          ylim=c(0, fourierMaxY))
   })
   
+  output$lineasEspectrales <- renderPlot({
+    par(mar = margenesDeGraficas)
+    tau <- input$tauFraccional * input$periodo
+    y <- map(ejeX, ~ (input$amplitud * tau / input$periodo) * (sin(.x / .x)))
+    plot(ejeX, y, type='l')
+  })
+  
   anchoDeBanda <- function(amplitud, periodo, tauFraccional) {
-    amplitud
+    tau <- tauFraccional * periodo
+    1/tau
   }
   
   output$anchoDeBanda <- renderText({ anchoDeBanda(input$amplitud, input$periodo, input$tauFraccional)})
